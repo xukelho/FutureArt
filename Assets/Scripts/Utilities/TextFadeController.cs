@@ -9,12 +9,15 @@ namespace FutureArt.Utilities
     {
         #region Fields
 
-        public UnityEvent FadeFinished;
+        public UnityEvent FadeInFinished;
+        public UnityEvent FadeOutFinished;
 
         [SerializeField] float _fadeInDurationInSeconds = 1;
         [SerializeField] float _fadeOutDurationInSeconds = 1;
 
         [SerializeField] TextMeshProUGUI _text;
+
+        bool _isFading = false;
 
         #endregion Fields
 
@@ -37,21 +40,28 @@ namespace FutureArt.Utilities
 
         public void StartFadeOut()
         {
-            StartCoroutine(Fade(1, 0, _fadeOutDurationInSeconds));
+            if (!_isFading)
+                StartCoroutine(Fade(1, 0, _fadeOutDurationInSeconds));
         }
 
         IEnumerator Fade(float beginVal, float endVal, float duration)
         {
+            _isFading = true;
+
             Color color = _text.color;
             float elapsedTime = 0;
             float waitTime = .1f;
+            float alphaValue = beginVal;
 
-            while (_text.color.a < 0.99f)
+            //while (_text.color.a < 0.99f)
+            while (alphaValue != endVal)
             {
+                var aux = gameObject.name;
+
                 elapsedTime += waitTime;
 
                 float step = elapsedTime / duration;
-                float alphaValue = Mathf.Lerp(beginVal, endVal, step);
+                alphaValue = Mathf.Lerp(beginVal, endVal, step);
 
                 color.a = alphaValue;
                 _text.color = color;
@@ -59,7 +69,12 @@ namespace FutureArt.Utilities
                 yield return new WaitForSeconds(waitTime);
             }
 
-            FadeFinished.Invoke();
+            if (beginVal < endVal)
+                FadeInFinished.Invoke();
+            else
+                FadeOutFinished.Invoke();
+
+            _isFading = false;
         }
 
         #endregion Methods
